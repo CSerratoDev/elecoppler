@@ -1,377 +1,5 @@
 import { useState } from "react";
 
-// ─── Paleta & estilos globales ───────────────────────────────────────────────
-const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap');
-
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg: #0a0a0f;
-    --panel: #111118;
-    --border: #1e1e2e;
-    --accent1: #00f5a0;
-    --accent2: #00c9ff;
-    --accent3: #f5a623;
-    --text: #e8e8f0;
-    --muted: #6b6b80;
-    --error: #ff4d6d;
-    --radius: 12px;
-    --font-display: 'Syne', sans-serif;
-    --font-mono: 'Space Mono', monospace;
-  }
-
-  body { background: var(--bg); color: var(--text); font-family: var(--font-display); }
-
-  .app {
-    min-height: 100vh;
-    background: var(--bg);
-    background-image:
-      radial-gradient(ellipse 80% 40% at 20% -10%, rgba(0,245,160,0.07) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 40% at 80% 110%, rgba(0,201,255,0.06) 0%, transparent 60%);
-  }
-
-  .header {
-    padding: 40px 24px 24px;
-    text-align: center;
-    border-bottom: 1px solid var(--border);
-    position: relative;
-  }
-  .header::after {
-    content: '';
-    position: absolute;
-    bottom: -1px; left: 50%; transform: translateX(-50%);
-    width: 120px; height: 2px;
-    background: linear-gradient(90deg, var(--accent1), var(--accent2));
-  }
-  .header-tag {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    letter-spacing: 4px;
-    color: var(--accent1);
-    text-transform: uppercase;
-    margin-bottom: 12px;
-  }
-  .header h1 {
-    font-size: clamp(28px, 5vw, 52px);
-    font-weight: 800;
-    letter-spacing: -1px;
-    line-height: 1.05;
-  }
-  .header h1 span { 
-    background: linear-gradient(135deg, var(--accent1), var(--accent2));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  .header p {
-    margin-top: 10px;
-    color: var(--muted);
-    font-size: 14px;
-    font-family: var(--font-mono);
-  }
-
-  .tabs {
-    display: flex;
-    gap: 0;
-    padding: 24px 24px 0;
-    max-width: 900px;
-    margin: 0 auto;
-    border-bottom: 1px solid var(--border);
-    overflow-x: auto;
-  }
-  .tab-btn {
-    padding: 12px 22px;
-    background: none;
-    border: none;
-    color: var(--muted);
-    font-family: var(--font-display);
-    font-weight: 600;
-    font-size: 13px;
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s;
-    white-space: nowrap;
-    letter-spacing: 0.3px;
-  }
-  .tab-btn:hover { color: var(--text); }
-  .tab-btn.active { color: var(--accent1); border-bottom-color: var(--accent1); }
-
-  .content {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 32px 24px 64px;
-  }
-
-  /* ── Cards ── */
-  .card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 28px;
-    margin-bottom: 20px;
-  }
-  .card-title {
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .card-title .dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--accent1);
-    flex-shrink: 0;
-  }
-  .card-title .dot.blue { background: var(--accent2); }
-  .card-title .dot.orange { background: var(--accent3); }
-
-  /* ── Formula display ── */
-  .formula-box {
-    background: #0d0d14;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 20px 24px;
-    font-family: var(--font-mono);
-    font-size: 20px;
-    text-align: center;
-    letter-spacing: 2px;
-    margin-bottom: 24px;
-    position: relative;
-    overflow: hidden;
-  }
-  .formula-box::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--accent1), transparent);
-  }
-  .formula-box .highlight { color: var(--accent1); }
-  .formula-box .highlight.blue { color: var(--accent2); }
-  .formula-box .highlight.orange { color: var(--accent3); }
-
-  /* ── Inputs grid ── */
-  .inputs-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 16px;
-    margin-bottom: 20px;
-  }
-  .input-group label {
-    display: block;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 8px;
-    font-family: var(--font-mono);
-  }
-  .input-group input, .input-group select {
-    width: 100%;
-    background: #0d0d14;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px 14px;
-    color: var(--text);
-    font-family: var(--font-mono);
-    font-size: 15px;
-    transition: border-color 0.2s;
-    appearance: none;
-  }
-  .input-group input:focus, .input-group select:focus {
-    outline: none;
-    border-color: var(--accent1);
-  }
-  .input-group input::placeholder { color: var(--muted); }
-
-  /* ── Result ── */
-  .result-box {
-    background: linear-gradient(135deg, rgba(0,245,160,0.08), rgba(0,201,255,0.05));
-    border: 1px solid rgba(0,245,160,0.25);
-    border-radius: 8px;
-    padding: 20px 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
-  .result-label {
-    font-size: 11px;
-    letter-spacing: 2px;
-    color: var(--muted);
-    text-transform: uppercase;
-    font-family: var(--font-mono);
-    margin-bottom: 4px;
-  }
-  .result-value {
-    font-family: var(--font-mono);
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--accent1);
-  }
-  .result-value.blue { color: var(--accent2); }
-  .result-value.orange { color: var(--accent3); }
-  .result-formula {
-    font-family: var(--font-mono);
-    font-size: 12px;
-    color: var(--muted);
-    text-align: right;
-  }
-  .result-box.error {
-    background: rgba(255,77,109,0.08);
-    border-color: rgba(255,77,109,0.25);
-  }
-  .result-box.error .result-value { color: var(--error); font-size: 14px; }
-
-  /* ── Explanation ── */
-  .explanation {
-    background: #0d0d14;
-    border-left: 3px solid var(--accent1);
-    border-radius: 0 8px 8px 0;
-    padding: 16px 20px;
-    font-size: 13px;
-    color: var(--muted);
-    line-height: 1.7;
-    font-family: var(--font-mono);
-  }
-  .explanation strong { color: var(--text); }
-  .explanation.blue { border-left-color: var(--accent2); }
-  .explanation.orange { border-left-color: var(--accent3); }
-
-  /* ── Triangle visual for Ohm ── */
-  .triangle-container {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 24px;
-  }
-  .ohm-triangle {
-    position: relative;
-    width: 180px;
-    height: 160px;
-  }
-  .tri-cell {
-    position: absolute;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 70px; height: 70px;
-    border-radius: 50%;
-    font-family: var(--font-mono);
-    font-weight: 700;
-    font-size: 18px;
-    transition: all 0.3s;
-  }
-  .tri-cell .sub { font-size: 9px; color: var(--muted); letter-spacing: 1px; margin-top: 2px; }
-  .tri-cell.top { top: 0; left: 50%; transform: translateX(-50%); background: rgba(0,245,160,0.15); border: 2px solid var(--accent1); color: var(--accent1); }
-  .tri-cell.bl  { bottom: 0; left: 0; background: rgba(0,201,255,0.15); border: 2px solid var(--accent2); color: var(--accent2); }
-  .tri-cell.br  { bottom: 0; right: 0; background: rgba(245,166,35,0.15); border: 2px solid var(--accent3); color: var(--accent3); }
-  .tri-cell.active { transform: translateX(-50%) scale(1.15); }
-  .tri-cell.bl.active, .tri-cell.br.active { transform: scale(1.15); }
-  .tri-line {
-    position: absolute;
-    background: var(--border);
-    transform-origin: 0 0;
-  }
-
-  /* ── Doppler wave visual ── */
-  .wave-visual {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    margin-bottom: 16px;
-    height: 48px;
-    overflow: hidden;
-  }
-  .wave-bar {
-    width: 4px;
-    border-radius: 2px;
-    background: var(--accent2);
-    animation: wave-anim 1.2s ease-in-out infinite;
-  }
-  @keyframes wave-anim {
-    0%, 100% { height: 8px; opacity: 0.3; }
-    50% { height: 40px; opacity: 1; }
-  }
-
-  /* ── Conversion double ── */
-  .conv-chain {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin: 16px 0;
-    font-family: var(--font-mono);
-    font-size: 13px;
-  }
-  .conv-step {
-    background: rgba(0,201,255,0.1);
-    border: 1px solid rgba(0,201,255,0.2);
-    border-radius: 6px;
-    padding: 6px 12px;
-    color: var(--accent2);
-  }
-  .conv-arrow { color: var(--muted); font-size: 18px; }
-
-  /* ── Solve-for radio ── */
-  .solve-for {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-  }
-  .solve-btn {
-    padding: 8px 16px;
-    border-radius: 20px;
-    border: 1px solid var(--border);
-    background: none;
-    color: var(--muted);
-    font-family: var(--font-mono);
-    font-size: 12px;
-    cursor: pointer;
-    transition: all 0.2s;
-    letter-spacing: 1px;
-  }
-  .solve-btn.active {
-    background: rgba(0,245,160,0.12);
-    border-color: var(--accent1);
-    color: var(--accent1);
-  }
-  .solve-btn.blue.active { background: rgba(0,201,255,0.12); border-color: var(--accent2); color: var(--accent2); }
-  .solve-btn.orange.active { background: rgba(245,166,35,0.12); border-color: var(--accent3); color: var(--accent3); }
-
-  .section-desc {
-    font-size: 13px;
-    color: var(--muted);
-    line-height: 1.6;
-    margin-bottom: 24px;
-    font-family: var(--font-mono);
-  }
-  .badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    margin-bottom: 8px;
-    font-family: var(--font-mono);
-  }
-  .badge.green { background: rgba(0,245,160,0.15); color: var(--accent1); }
-  .badge.blue  { background: rgba(0,201,255,0.15); color: var(--accent2); }
-  .badge.orange{ background: rgba(245,166,35,0.15); color: var(--accent3); }
-`;
-
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const fmt = (n: number, decimals = 4): string => {
   if (!isFinite(n)) return "—";
@@ -382,122 +10,305 @@ const fmt = (n: number, decimals = 4): string => {
 
 const parse = (s: string): number => parseFloat(s.replace(",", "."));
 
+// ─── Shared UI primitives ─────────────────────────────────────────────────────
+
+interface BadgeProps { children: React.ReactNode; variant: "green" | "blue" | "orange" }
+const Badge = ({ children, variant }: BadgeProps) => {
+  const cls: Record<BadgeProps["variant"], string> = {
+    green:  "bg-accent1/15 text-accent1",
+    blue:   "bg-accent2/15 text-accent2",
+    orange: "bg-accent3/15 text-accent3",
+  };
+  return (
+    <span className={`inline-block px-2 py-0.5 rounded font-mono text-2xs font-bold tracking-widest uppercase mb-2 ${cls[variant]}`}>
+      {children}
+    </span>
+  );
+};
+
+const SectionDesc = ({ children }: { children: React.ReactNode }) => (
+  <p className="font-mono text-[13px] text-muted leading-relaxed mb-6">{children}</p>
+);
+
+interface DotProps { variant?: "green" | "blue" | "orange" }
+const Dot = ({ variant = "green" }: DotProps) => {
+  const cls: Record<string, string> = {
+    green:  "bg-accent1",
+    blue:   "bg-accent2",
+    orange: "bg-accent3",
+  };
+  return <span className={`inline-block w-2 h-2 rounded-full flex-shrink-0 ${cls[variant]}`} />;
+};
+
+interface CardProps { children: React.ReactNode; className?: string }
+const Card = ({ children, className = "" }: CardProps) => (
+  <div className={`bg-panel border border-border rounded-xl p-7 mb-5 ${className}`}>
+    {children}
+  </div>
+);
+
+interface CardTitleProps { children: React.ReactNode; dot?: "green" | "blue" | "orange" }
+const CardTitle = ({ children, dot = "green" }: CardTitleProps) => (
+  <div className="flex items-center gap-2 font-mono text-[13px] font-bold tracking-widest uppercase text-muted mb-5">
+    <Dot variant={dot} />
+    {children}
+  </div>
+);
+
+interface FormulaBoxProps { children: React.ReactNode; borderColor?: string }
+const FormulaBox = ({ children, borderColor }: FormulaBoxProps) => (
+  <div
+    className="formula-box relative overflow-hidden bg-surface border border-border rounded-lg px-6 py-5 font-mono text-xl text-center tracking-widest mb-6"
+    style={borderColor ? { borderColor } : undefined}
+  >
+    {children}
+  </div>
+);
+
+interface ExplanationProps { children: React.ReactNode; variant?: "green" | "blue" | "orange" }
+const Explanation = ({ children, variant = "green" }: ExplanationProps) => {
+  const border: Record<string, string> = {
+    green:  "border-accent1",
+    blue:   "border-accent2",
+    orange: "border-accent3",
+  };
+  return (
+    <div className={`bg-surface border-l-[3px] ${border[variant]} rounded-r-lg px-5 py-4 font-mono text-[13px] text-muted leading-[1.7]`}>
+      {children}
+    </div>
+  );
+};
+
+interface ResultBoxProps {
+  children: React.ReactNode;
+  variant?: "green" | "blue" | "orange" | "error";
+}
+const ResultBox = ({ children, variant = "green" }: ResultBoxProps) => {
+  const styles: Record<string, React.CSSProperties> = {
+    green:  { background: "rgba(0,245,160,0.08)",  borderColor: "rgba(0,245,160,0.25)" },
+    blue:   { background: "rgba(0,201,255,0.08)",  borderColor: "rgba(0,201,255,0.25)" },
+    orange: { background: "rgba(245,166,35,0.08)", borderColor: "rgba(245,166,35,0.25)" },
+    error:  { background: "rgba(255,77,109,0.08)", borderColor: "rgba(255,77,109,0.25)" },
+  };
+  return (
+    <div
+      className="border rounded-lg px-6 py-5 flex items-center justify-between gap-4 flex-wrap"
+      style={styles[variant]}
+    >
+      {children}
+    </div>
+  );
+};
+
+const ResultValue = ({ children, variant = "green" }: { children: React.ReactNode; variant?: "green" | "blue" | "orange" | "error" }) => {
+  const cls: Record<string, string> = {
+    green:  "text-accent1",
+    blue:   "text-accent2",
+    orange: "text-accent3",
+    error:  "text-error text-sm",
+  };
+  return (
+    <div className={`font-mono text-[28px] font-bold ${cls[variant]}`}>{children}</div>
+  );
+};
+
+interface SolveBtnProps {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+  variant?: "green" | "blue" | "orange";
+}
+const SolveBtn = ({ active, onClick, children, variant = "green" }: SolveBtnProps) => {
+  const activeStyles: Record<string, React.CSSProperties> = {
+    green:  { background: "rgba(0,245,160,0.12)",  borderColor: "#00f5a0", color: "#00f5a0" },
+    blue:   { background: "rgba(0,201,255,0.12)",  borderColor: "#00c9ff", color: "#00c9ff" },
+    orange: { background: "rgba(245,166,35,0.12)", borderColor: "#f5a623", color: "#f5a623" },
+  };
+  return (
+    <button
+      onClick={onClick}
+      className="px-4 py-2 rounded-full border border-border font-mono text-xs text-muted cursor-pointer transition-all duration-200 tracking-wider"
+      style={active ? activeStyles[variant] : undefined}
+    >
+      {children}
+    </button>
+  );
+};
+
+const InputGroup = ({
+  label, value, onChange, placeholder, type = "number",
+}: {
+  label: string; value: string; onChange: (v: string) => void;
+  placeholder?: string; type?: string;
+}) => (
+  <div>
+    <label className="block font-mono text-[11px] font-semibold tracking-[1.5px] uppercase text-muted mb-2">
+      {label}
+    </label>
+    <input
+      type={type}
+      placeholder={placeholder}
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      className="w-full bg-surface border border-border rounded-lg px-[14px] py-3 text-text font-mono text-[15px] transition-colors duration-200 focus:outline-none focus:border-accent1 placeholder:text-muted appearance-none"
+    />
+  </div>
+);
+
+const SelectGroup = ({
+  label, value, onChange, options,
+}: {
+  label: string; value: string; onChange: (v: string) => void;
+  options: { key: string; label: string }[];
+}) => (
+  <div>
+    <label className="block font-mono text-[11px] font-semibold tracking-[1.5px] uppercase text-muted mb-2">
+      {label}
+    </label>
+    <select
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      className="w-full bg-surface border border-border rounded-lg px-[14px] py-3 text-text font-mono text-[15px] transition-colors duration-200 focus:outline-none focus:border-accent1 appearance-none cursor-pointer"
+    >
+      {options.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
+    </select>
+  </div>
+);
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. LEY DE OHM
 // ─────────────────────────────────────────────────────────────────────────────
-function OhmLaw() {
-  const [solve, setSolve] = useState<"V" | "I" | "R">("V");
-  const [vals, setVals] = useState({ V: "", I: "", R: "" });
+type OhmVar = "V" | "I" | "R";
 
-  const set = (k: string, v: string) => setVals(p => ({ ...p, [k]: v }));
+function OhmLaw() {
+  const [solve, setSolve] = useState<OhmVar>("V");
+  const [vals, setVals] = useState<Record<OhmVar, string>>({ V: "", I: "", R: "" });
+
+  const set = (k: OhmVar, v: string) => setVals(p => ({ ...p, [k]: v }));
 
   const result = (() => {
     const V = parse(vals.V), I = parse(vals.I), R = parse(vals.R);
     if (solve === "V") {
       if (!isFinite(I) || !isFinite(R)) return null;
-      return { value: I * R, unit: "V (Voltios)", formula: `V = ${fmt(I)} × ${fmt(R)}`, color: "green" };
+      return { value: I * R, unit: "V (Voltios)", formula: `V = ${fmt(I)} × ${fmt(R)}`, variant: "green" as const };
     }
     if (solve === "I") {
       if (!isFinite(V) || !isFinite(R) || R === 0) return null;
-      return { value: V / R, unit: "A (Amperios)", formula: `I = ${fmt(V)} ÷ ${fmt(R)}`, color: "blue" };
+      return { value: V / R, unit: "A (Amperios)", formula: `I = ${fmt(V)} ÷ ${fmt(R)}`, variant: "blue" as const };
     }
     if (solve === "R") {
       if (!isFinite(V) || !isFinite(I) || I === 0) return null;
-      return { value: V / I, unit: "Ω (Ohmios)", formula: `R = ${fmt(V)} ÷ ${fmt(I)}`, color: "orange" };
+      return { value: V / I, unit: "Ω (Ohmios)", formula: `R = ${fmt(V)} ÷ ${fmt(I)}`, variant: "orange" as const };
     }
     return null;
   })();
 
-  const inputs: Array<{ key: "V" | "I" | "R"; label: string; placeholder: string; unit: string }> = [
-    { key: "V", label: "Voltaje (V)", placeholder: "ej: 12", unit: "V" },
-    { key: "I", label: "Corriente (I)", placeholder: "ej: 2", unit: "A" },
-    { key: "R", label: "Resistencia (R)", placeholder: "ej: 6", unit: "Ω" },
+  const allInputs: { key: OhmVar; label: string; placeholder: string }[] = [
+    { key: "V", label: "Voltaje (V)",      placeholder: "ej: 12" },
+    { key: "I", label: "Corriente (I)",    placeholder: "ej: 2"  },
+    { key: "R", label: "Resistencia (R)",  placeholder: "ej: 6"  },
   ];
+
+  const triActive = (k: OhmVar) => solve === k;
 
   return (
     <div>
-      <div className="badge green">Ley de Ohm</div>
-      <p className="section-desc">
-        La Ley de Ohm establece que la tensión entre dos puntos de un conductor es directamente proporcional a la intensidad de corriente. <strong style={{ color: "var(--text)" }}>V = I × R</strong>
-      </p>
+      <Badge variant="green">Ley de Ohm</Badge>
+      <SectionDesc>
+        La Ley de Ohm establece que la tensión entre dos puntos de un conductor es directamente proporcional a la intensidad de corriente.{" "}
+        <strong className="text-text">V = I × R</strong>
+      </SectionDesc>
 
-      <div className="card">
-        <div className="card-title"><span className="dot" /> Triángulo de la Ley de Ohm</div>
-        <div className="triangle-container">
-          <div className="ohm-triangle">
-            <div className={`tri-cell top${solve === "V" ? " active" : ""}`}>
-              V<span className="sub">Voltaje</span>
+      {/* Triángulo */}
+      <Card>
+        <CardTitle dot="green">Triángulo de la Ley de Ohm</CardTitle>
+        <div className="flex justify-center mb-6">
+          <div className="relative w-[180px] h-[160px]">
+            {/* V — top */}
+            <div
+              className={`absolute top-0 left-1/2 flex flex-col items-center justify-center w-[70px] h-[70px] rounded-full font-mono font-bold text-lg border-2 border-accent1 bg-accent1/15 text-accent1 transition-all duration-300 ${triActive("V") ? "scale-[1.15]" : ""}`}
+              style={{ transform: `translateX(-50%) ${triActive("V") ? "scale(1.15)" : "scale(1)"}` }}
+            >
+              V<span className="text-[9px] text-muted tracking-wider mt-0.5">Voltaje</span>
             </div>
-            <div className={`tri-cell bl${solve === "I" ? " active" : ""}`}>
-              I<span className="sub">Corriente</span>
+            {/* I — bottom left */}
+            <div
+              className={`absolute bottom-0 left-0 flex flex-col items-center justify-center w-[70px] h-[70px] rounded-full font-mono font-bold text-lg border-2 border-accent2 bg-accent2/15 text-accent2 transition-all duration-300 ${triActive("I") ? "scale-[1.15]" : ""}`}
+            >
+              I<span className="text-[9px] text-muted tracking-wider mt-0.5">Corriente</span>
             </div>
-            <div className={`tri-cell br${solve === "R" ? " active" : ""}`}>
-              R<span className="sub">Resistencia</span>
+            {/* R — bottom right */}
+            <div
+              className={`absolute bottom-0 right-0 flex flex-col items-center justify-center w-[70px] h-[70px] rounded-full font-mono font-bold text-lg border-2 border-accent3 bg-accent3/15 text-accent3 transition-all duration-300 ${triActive("R") ? "scale-[1.15]" : ""}`}
+            >
+              R<span className="text-[9px] text-muted tracking-wider mt-0.5">Resistencia</span>
             </div>
           </div>
         </div>
-        <div className="formula-box">
-          <span className="highlight">V</span> = <span className="highlight blue">I</span> × <span className="highlight orange">R</span>
-        </div>
-      </div>
+        <FormulaBox>
+          <span className="text-accent1">V</span>
+          {" = "}
+          <span className="text-accent2">I</span>
+          {" × "}
+          <span className="text-accent3">R</span>
+        </FormulaBox>
+      </Card>
 
-      <div className="card">
-        <div className="card-title"><span className="dot blue" /> Calculadora</div>
-        <p style={{ fontSize: 12, color: "var(--muted)", marginBottom: 12, fontFamily: "var(--font-mono)" }}>¿Qué quieres calcular?</p>
-        <div className="solve-for">
-          {(["V", "I", "R"] as const).map(k => (
-            <button key={k}
-              className={`solve-btn${solve === k ? k === "V" ? " active" : k === "I" ? " blue active" : " orange active" : ""}`}
-              onClick={() => setSolve(k)}>
+      {/* Calculadora */}
+      <Card>
+        <CardTitle dot="blue">Calculadora</CardTitle>
+        <p className="font-mono text-xs text-muted mb-3">¿Qué quieres calcular?</p>
+        <div className="flex gap-2 mb-5 flex-wrap">
+          {(["V", "I", "R"] as OhmVar[]).map(k => (
+            <SolveBtn
+              key={k}
+              active={solve === k}
+              onClick={() => setSolve(k)}
+              variant={k === "V" ? "green" : k === "I" ? "blue" : "orange"}
+            >
               {k === "V" ? "Voltaje (V)" : k === "I" ? "Corriente (I)" : "Resistencia (R)"}
-            </button>
+            </SolveBtn>
           ))}
         </div>
-        <div className="inputs-grid">
-          {inputs.filter(i => i.key !== solve).map(({ key, label, placeholder, unit }) => (
-            <div key={key} className="input-group">
-              <label>{label}</label>
-              <input
-                type="number"
-                placeholder={placeholder}
-                value={vals[key]}
-                onChange={e => set(key, e.target.value)}
-              />
-            </div>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-5">
+          {allInputs.filter(i => i.key !== solve).map(({ key, label, placeholder }) => (
+            <InputGroup key={key} label={label} placeholder={placeholder} value={vals[key]} onChange={v => set(key, v)} />
           ))}
         </div>
         {result ? (
-          <div className={`result-box${result.color === "green" ? "" : result.color === "blue" ? " blue" : ""}`}
-            style={result.color === "orange" ? { background: "rgba(245,166,35,0.08)", borderColor: "rgba(245,166,35,0.25)" } : undefined}>
+          <ResultBox variant={result.variant}>
             <div>
-              <div className="result-label">Resultado</div>
-              <div className={`result-value${result.color === "blue" ? " blue" : result.color === "orange" ? " orange" : ""}`}>
-                {fmt(result.value)} <span style={{ fontSize: 14 }}>{result.unit}</span>
-              </div>
+              <div className="font-mono text-[11px] tracking-widest uppercase text-muted mb-1">Resultado</div>
+              <ResultValue variant={result.variant}>
+                {fmt(result.value)} <span className="text-sm font-normal">{result.unit}</span>
+              </ResultValue>
             </div>
-            <div className="result-formula">{result.formula}</div>
-          </div>
+            <div className="font-mono text-xs text-muted text-right">{result.formula}</div>
+          </ResultBox>
         ) : (
-          <div className="explanation">
-            Ingresa los valores conocidos para calcular el resultado.
-          </div>
+          <Explanation>Ingresa los valores conocidos para calcular el resultado.</Explanation>
         )}
-      </div>
+      </Card>
 
-      <div className="card">
-        <div className="card-title"><span className="dot" /> Derivaciones</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 12 }}>
+      {/* Derivaciones */}
+      <Card>
+        <CardTitle dot="green">Derivaciones</CardTitle>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
           {[
-            { f: "V = I × R", c: "var(--accent1)" },
-            { f: "I = V ÷ R", c: "var(--accent2)" },
-            { f: "R = V ÷ I", c: "var(--accent3)" },
+            { f: "V = I × R", c: "#00f5a0" },
+            { f: "I = V ÷ R", c: "#00c9ff" },
+            { f: "R = V ÷ I", c: "#f5a623" },
           ].map(({ f, c }) => (
-            <div key={f} className="formula-box" style={{ fontSize: 15, borderColor: c, marginBottom: 0 }}>
+            <div
+              key={f}
+              className="relative overflow-hidden bg-surface border rounded-lg px-6 py-5 font-mono text-[15px] text-center tracking-widest"
+              style={{ borderColor: c }}
+            >
               <span style={{ color: c }}>{f}</span>
             </div>
           ))}
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
@@ -505,72 +316,71 @@ function OhmLaw() {
 // ─────────────────────────────────────────────────────────────────────────────
 // 2. CONVERSIONES
 // ─────────────────────────────────────────────────────────────────────────────
-type UnitGroup = { label: string; units: { key: string; label: string; toBase: (v: number) => number; fromBase: (v: number) => number }[] };
+interface UnitDef { key: string; label: string; toBase: (v: number) => number; fromBase: (v: number) => number }
+interface UnitGroup { label: string; units: UnitDef[] }
 
 const unitGroups: UnitGroup[] = [
   {
     label: "Longitud",
     units: [
-      { key: "m", label: "Metro (m)", toBase: v => v, fromBase: v => v },
-      { key: "km", label: "Kilómetro (km)", toBase: v => v * 1000, fromBase: v => v / 1000 },
-      { key: "cm", label: "Centímetro (cm)", toBase: v => v / 100, fromBase: v => v * 100 },
-      { key: "mm", label: "Milímetro (mm)", toBase: v => v / 1000, fromBase: v => v * 1000 },
-      { key: "mi", label: "Milla (mi)", toBase: v => v * 1609.34, fromBase: v => v / 1609.34 },
-      { key: "ft", label: "Pie (ft)", toBase: v => v * 0.3048, fromBase: v => v / 0.3048 },
-      { key: "in", label: "Pulgada (in)", toBase: v => v * 0.0254, fromBase: v => v / 0.0254 },
-    ]
+      { key: "m",  label: "Metro (m)",        toBase: v => v,            fromBase: v => v },
+      { key: "km", label: "Kilómetro (km)",    toBase: v => v * 1000,     fromBase: v => v / 1000 },
+      { key: "cm", label: "Centímetro (cm)",   toBase: v => v / 100,      fromBase: v => v * 100 },
+      { key: "mm", label: "Milímetro (mm)",    toBase: v => v / 1000,     fromBase: v => v * 1000 },
+      { key: "mi", label: "Milla (mi)",        toBase: v => v * 1609.34,  fromBase: v => v / 1609.34 },
+      { key: "ft", label: "Pie (ft)",          toBase: v => v * 0.3048,   fromBase: v => v / 0.3048 },
+      { key: "in", label: "Pulgada (in)",      toBase: v => v * 0.0254,   fromBase: v => v / 0.0254 },
+    ],
   },
   {
     label: "Masa",
     units: [
-      { key: "kg", label: "Kilogramo (kg)", toBase: v => v, fromBase: v => v },
-      { key: "g", label: "Gramo (g)", toBase: v => v / 1000, fromBase: v => v * 1000 },
-      { key: "mg", label: "Miligramo (mg)", toBase: v => v / 1e6, fromBase: v => v * 1e6 },
-      { key: "lb", label: "Libra (lb)", toBase: v => v * 0.453592, fromBase: v => v / 0.453592 },
-      { key: "oz", label: "Onza (oz)", toBase: v => v * 0.0283495, fromBase: v => v / 0.0283495 },
-      { key: "t", label: "Tonelada (t)", toBase: v => v * 1000, fromBase: v => v / 1000 },
-    ]
+      { key: "kg", label: "Kilogramo (kg)",  toBase: v => v,            fromBase: v => v },
+      { key: "g",  label: "Gramo (g)",       toBase: v => v / 1000,     fromBase: v => v * 1000 },
+      { key: "mg", label: "Miligramo (mg)",  toBase: v => v / 1e6,      fromBase: v => v * 1e6 },
+      { key: "lb", label: "Libra (lb)",      toBase: v => v * 0.453592, fromBase: v => v / 0.453592 },
+      { key: "oz", label: "Onza (oz)",       toBase: v => v * 0.0283495,fromBase: v => v / 0.0283495 },
+      { key: "t",  label: "Tonelada (t)",    toBase: v => v * 1000,     fromBase: v => v / 1000 },
+    ],
   },
   {
     label: "Temperatura",
     units: [
-      { key: "C", label: "Celsius (°C)", toBase: v => v, fromBase: v => v },
-      { key: "F", label: "Fahrenheit (°F)", toBase: v => (v - 32) * 5 / 9, fromBase: v => v * 9 / 5 + 32 },
-      { key: "K", label: "Kelvin (K)", toBase: v => v - 273.15, fromBase: v => v + 273.15 },
-    ]
+      { key: "C", label: "Celsius (°C)",    toBase: v => v,           fromBase: v => v },
+      { key: "F", label: "Fahrenheit (°F)", toBase: v => (v-32)*5/9,  fromBase: v => v*9/5+32 },
+      { key: "K", label: "Kelvin (K)",      toBase: v => v - 273.15,  fromBase: v => v + 273.15 },
+    ],
   },
   {
     label: "Velocidad",
     units: [
-      { key: "ms", label: "m/s", toBase: v => v, fromBase: v => v },
-      { key: "kmh", label: "km/h", toBase: v => v / 3.6, fromBase: v => v * 3.6 },
+      { key: "ms",  label: "m/s",  toBase: v => v,           fromBase: v => v },
+      { key: "kmh", label: "km/h", toBase: v => v / 3.6,     fromBase: v => v * 3.6 },
       { key: "mph", label: "mi/h", toBase: v => v * 0.44704, fromBase: v => v / 0.44704 },
-      { key: "kn", label: "Nudo", toBase: v => v * 0.514444, fromBase: v => v / 0.514444 },
-    ]
+      { key: "kn",  label: "Nudo", toBase: v => v * 0.514444,fromBase: v => v / 0.514444 },
+    ],
   },
   {
     label: "Tiempo",
     units: [
-      { key: "s", label: "Segundo (s)", toBase: v => v, fromBase: v => v },
-      { key: "min", label: "Minuto (min)", toBase: v => v * 60, fromBase: v => v / 60 },
-      { key: "h", label: "Hora (h)", toBase: v => v * 3600, fromBase: v => v / 3600 },
-      { key: "d", label: "Día (d)", toBase: v => v * 86400, fromBase: v => v / 86400 },
-    ]
+      { key: "s",   label: "Segundo (s)",  toBase: v => v,         fromBase: v => v },
+      { key: "min", label: "Minuto (min)", toBase: v => v * 60,    fromBase: v => v / 60 },
+      { key: "h",   label: "Hora (h)",     toBase: v => v * 3600,  fromBase: v => v / 3600 },
+      { key: "d",   label: "Día (d)",      toBase: v => v * 86400, fromBase: v => v / 86400 },
+    ],
   },
 ];
 
 function Conversions() {
-  const [groupIdx, setGroupIdx] = useState(0);
-  const [fromKey, setFromKey] = useState("m");
-  const [toKey, setToKey] = useState("km");
-  const [value, setValue] = useState("");
-
-  // Doble conversión
-  const [midKey, setMidKey] = useState("cm");
+  const [groupIdx, setGroupIdx]   = useState(0);
+  const [fromKey,  setFromKey]    = useState("m");
+  const [toKey,    setToKey]      = useState("km");
+  const [midKey,   setMidKey]     = useState("cm");
+  const [value,    setValue]      = useState("");
   const [showDouble, setShowDouble] = useState(false);
 
   const group = unitGroups[groupIdx];
-  const findUnit = (k: string) => group.units.find(u => u.key === k);
+  const findUnit = (k: string): UnitDef | undefined => group.units.find(u => u.key === k);
 
   const convert = (v: number, from: string, to: string): number => {
     const fu = findUnit(from), tu = findUnit(to);
@@ -578,140 +388,121 @@ function Conversions() {
     return tu.fromBase(fu.toBase(v));
   };
 
-  const num = parse(value);
+  const num    = parse(value);
   const result = isFinite(num) ? convert(num, fromKey, toKey) : null;
-
-  // Doble conversión
-  const mid = isFinite(num) && showDouble ? convert(num, fromKey, midKey) : null;
-  const final = mid !== null ? convert(mid, midKey, toKey) : null;
+  const mid    = isFinite(num) && showDouble ? convert(num, fromKey, midKey) : null;
+  const final  = mid !== null ? convert(mid, midKey, toKey) : null;
 
   const handleGroupChange = (idx: number) => {
     setGroupIdx(idx);
     const g = unitGroups[idx];
     setFromKey(g.units[0].key);
-    setToKey(g.units[1]?.key || g.units[0].key);
-    setMidKey(g.units[2]?.key || g.units[1]?.key || g.units[0].key);
+    setToKey(g.units[1]?.key ?? g.units[0].key);
+    setMidKey(g.units[2]?.key ?? g.units[1]?.key ?? g.units[0].key);
     setValue("");
   };
 
   return (
     <div>
-      <div className="badge blue">Conversiones</div>
-      <p className="section-desc">
-        Convierte entre unidades de medida de una misma magnitud física. Las <strong style={{ color: "var(--text)" }}>conversiones dobles</strong> permiten pasar por una unidad intermedia.
-      </p>
+      <Badge variant="blue">Conversiones</Badge>
+      <SectionDesc>
+        Convierte entre unidades de medida de una misma magnitud física.{" "}
+        Las <strong className="text-text">conversiones dobles</strong> permiten pasar por una unidad intermedia.
+      </SectionDesc>
 
-      <div className="card">
-        <div className="card-title"><span className="dot blue" /> Categoría</div>
-        <div className="solve-for">
+      {/* Categoría */}
+      <Card>
+        <CardTitle dot="blue">Categoría</CardTitle>
+        <div className="flex gap-2 flex-wrap">
           {unitGroups.map((g, i) => (
-            <button key={g.label}
-              className={`solve-btn blue${groupIdx === i ? " active" : ""}`}
-              onClick={() => handleGroupChange(i)}>
+            <SolveBtn key={g.label} active={groupIdx === i} onClick={() => handleGroupChange(i)} variant="blue">
               {g.label}
-            </button>
+            </SolveBtn>
           ))}
         </div>
-      </div>
+      </Card>
 
-      <div className="card">
-        <div className="card-title"><span className="dot blue" /> Conversión Simple</div>
-        <div className="inputs-grid">
-          <div className="input-group">
-            <label>Valor</label>
-            <input type="number" placeholder="ej: 100" value={value} onChange={e => setValue(e.target.value)} />
-          </div>
-          <div className="input-group">
-            <label>De</label>
-            <select value={fromKey} onChange={e => setFromKey(e.target.value)}>
-              {group.units.map(u => <option key={u.key} value={u.key}>{u.label}</option>)}
-            </select>
-          </div>
-          <div className="input-group">
-            <label>A</label>
-            <select value={toKey} onChange={e => setToKey(e.target.value)}>
-              {group.units.map(u => <option key={u.key} value={u.key}>{u.label}</option>)}
-            </select>
-          </div>
+      {/* Simple */}
+      <Card>
+        <CardTitle dot="blue">Conversión Simple</CardTitle>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-5">
+          <InputGroup label="Valor" placeholder="ej: 100" value={value} onChange={setValue} />
+          <SelectGroup label="De" value={fromKey} onChange={setFromKey} options={group.units.map(u => ({ key: u.key, label: u.label }))} />
+          <SelectGroup label="A"  value={toKey}   onChange={setToKey}   options={group.units.map(u => ({ key: u.key, label: u.label }))} />
         </div>
         {result !== null ? (
-          <div className="result-box" style={{ background: "rgba(0,201,255,0.08)", borderColor: "rgba(0,201,255,0.25)" }}>
+          <ResultBox variant="blue">
             <div>
-              <div className="result-label">Resultado</div>
-              <div className="result-value blue">{fmt(result)} <span style={{ fontSize: 14 }}>{findUnit(toKey)?.label}</span></div>
+              <div className="font-mono text-[11px] tracking-widest uppercase text-muted mb-1">Resultado</div>
+              <ResultValue variant="blue">
+                {fmt(result)} <span className="text-sm font-normal">{findUnit(toKey)?.label}</span>
+              </ResultValue>
             </div>
-            <div className="result-formula">{fmt(num)} {fromKey} → {fmt(result)} {toKey}</div>
-          </div>
+            <div className="font-mono text-xs text-muted text-right">{fmt(num)} {fromKey} → {fmt(result)} {toKey}</div>
+          </ResultBox>
         ) : (
-          <div className="explanation blue">Ingresa un valor para convertir.</div>
+          <Explanation variant="blue">Ingresa un valor para convertir.</Explanation>
         )}
-      </div>
+      </Card>
 
-      <div className="card">
-        <div className="card-title"><span className="dot blue" /> Conversión Doble</div>
-        <div style={{ marginBottom: 16 }}>
-          <button
-            className={`solve-btn blue${showDouble ? " active" : ""}`}
-            onClick={() => setShowDouble(p => !p)}>
+      {/* Doble */}
+      <Card>
+        <CardTitle dot="blue">Conversión Doble</CardTitle>
+        <div className="mb-4">
+          <SolveBtn active={showDouble} onClick={() => setShowDouble(p => !p)} variant="blue">
             {showDouble ? "✓ Activada" : "Activar conversión doble"}
-          </button>
+          </SolveBtn>
         </div>
-        {showDouble && (
+
+        {showDouble ? (
           <>
-            <div className="inputs-grid">
-              <div className="input-group">
-                <label>Valor inicial</label>
-                <input type="number" placeholder="ej: 1000" value={value} onChange={e => setValue(e.target.value)} />
-              </div>
-              <div className="input-group">
-                <label>De</label>
-                <select value={fromKey} onChange={e => setFromKey(e.target.value)}>
-                  {group.units.map(u => <option key={u.key} value={u.key}>{u.label}</option>)}
-                </select>
-              </div>
-              <div className="input-group">
-                <label>Unidad intermedia</label>
-                <select value={midKey} onChange={e => setMidKey(e.target.value)}>
-                  {group.units.map(u => <option key={u.key} value={u.key}>{u.label}</option>)}
-                </select>
-              </div>
-              <div className="input-group">
-                <label>Unidad final</label>
-                <select value={toKey} onChange={e => setToKey(e.target.value)}>
-                  {group.units.map(u => <option key={u.key} value={u.key}>{u.label}</option>)}
-                </select>
-              </div>
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-5">
+              <InputGroup label="Valor inicial" placeholder="ej: 1000" value={value} onChange={setValue} />
+              <SelectGroup label="De"               value={fromKey} onChange={setFromKey} options={group.units.map(u => ({ key: u.key, label: u.label }))} />
+              <SelectGroup label="Unidad intermedia" value={midKey}  onChange={setMidKey}  options={group.units.map(u => ({ key: u.key, label: u.label }))} />
+              <SelectGroup label="Unidad final"      value={toKey}   onChange={setToKey}   options={group.units.map(u => ({ key: u.key, label: u.label }))} />
             </div>
             {isFinite(num) && mid !== null && final !== null ? (
               <>
-                <div className="conv-chain">
-                  <span className="conv-step">{fmt(num)} {fromKey}</span>
-                  <span className="conv-arrow">→</span>
-                  <span className="conv-step">{fmt(mid)} {midKey}</span>
-                  <span className="conv-arrow">→</span>
-                  <span className="conv-step" style={{ borderColor: "var(--accent1)", color: "var(--accent1)", background: "rgba(0,245,160,0.1)" }}>
-                    {fmt(final)} {toKey}
-                  </span>
+                {/* cadena */}
+                <div className="flex items-center gap-2 flex-wrap my-4 font-mono text-[13px]">
+                  {[
+                    { label: `${fmt(num)} ${fromKey}`,  color: undefined },
+                    { label: "→",                        arrow: true },
+                    { label: `${fmt(mid)} ${midKey}`,   color: undefined },
+                    { label: "→",                        arrow: true },
+                    { label: `${fmt(final)} ${toKey}`,  final: true },
+                  ].map((item, i) =>
+                    "arrow" in item ? (
+                      <span key={i} className="text-muted text-lg">→</span>
+                    ) : "final" in item ? (
+                      <span key={i} className="px-3 py-1.5 rounded-md border border-accent1/40 bg-accent1/10 text-accent1">{item.label}</span>
+                    ) : (
+                      <span key={i} className="px-3 py-1.5 rounded-md border border-accent2/20 bg-accent2/10 text-accent2">{item.label}</span>
+                    )
+                  )}
                 </div>
-                <div className="result-box" style={{ background: "rgba(0,245,160,0.08)", borderColor: "rgba(0,245,160,0.25)" }}>
+                <ResultBox variant="green">
                   <div>
-                    <div className="result-label">Resultado final</div>
-                    <div className="result-value">{fmt(final)} <span style={{ fontSize: 14 }}>{findUnit(toKey)?.label}</span></div>
+                    <div className="font-mono text-[11px] tracking-widest uppercase text-muted mb-1">Resultado final</div>
+                    <ResultValue variant="green">
+                      {fmt(final)} <span className="text-sm font-normal">{findUnit(toKey)?.label}</span>
+                    </ResultValue>
                   </div>
-                  <div className="result-formula">{fromKey} → {midKey} → {toKey}</div>
-                </div>
+                  <div className="font-mono text-xs text-muted text-right">{fromKey} → {midKey} → {toKey}</div>
+                </ResultBox>
               </>
             ) : (
-              <div className="explanation blue">Ingresa un valor y selecciona las unidades.</div>
+              <Explanation variant="blue">Ingresa un valor y selecciona las unidades.</Explanation>
             )}
           </>
+        ) : (
+          <Explanation variant="blue">
+            Una <strong>conversión doble</strong> convierte primero a una unidad intermedia y luego al destino final.
+            Útil cuando no existe factor directo entre dos unidades.
+          </Explanation>
         )}
-        {!showDouble && (
-          <div className="explanation blue">
-            Una <strong>conversión doble</strong> convierte primero a una unidad intermedia y luego al destino final. Útil cuando no existe factor directo entre dos unidades.
-          </div>
-        )}
-      </div>
+      </Card>
     </div>
   );
 }
@@ -719,136 +510,164 @@ function Conversions() {
 // ─────────────────────────────────────────────────────────────────────────────
 // 3. EFECTO DOPPLER
 // ─────────────────────────────────────────────────────────────────────────────
-const SOUND_SPEED = 343; // m/s en aire a 20°C
+type DopplerVar = "fo" | "fs" | "vs" | "vo";
+
+const SOUND_SPEED = 343;
 
 function DopplerEffect() {
-  const [mode, setMode] = useState<"fo" | "fs" | "vs" | "vo">("fo");
-  const [vals, setVals] = useState({ fo: "", fs: "", vs: String(SOUND_SPEED), vo: "0" });
+  const [mode, setMode] = useState<DopplerVar>("fo");
+  const [vals, setVals] = useState<Record<DopplerVar, string>>({
+    fo: "", fs: "", vs: String(SOUND_SPEED), vo: "0",
+  });
 
-  const set = (k: string, v: string) => setVals(p => ({ ...p, [k]: v }));
+  const set = (k: DopplerVar, v: string) => setVals(p => ({ ...p, [k]: v }));
 
   const result = (() => {
     const fo = parse(vals.fo), fs = parse(vals.fs),
-      vs = parse(vals.vs), vo = parse(vals.vo);
+          vs = parse(vals.vs), vo = parse(vals.vo);
     try {
       if (mode === "fo") {
-        if (!isFinite(fs) || !isFinite(vs) || !isFinite(vo)) return null;
-        if (vs - vo === 0) return { error: "vs - vo no puede ser 0" };
-        return { value: fs * (vs + vo) / (vs - vo), unit: "Hz", formula: `fo = ${fmt(fs)} × (${fmt(vs)} + ${fmt(vo)}) / (${fmt(vs)} - ${fmt(vo)})` };
+        if (!isFinite(fs)||!isFinite(vs)||!isFinite(vo)) return null;
+        if (vs - vo === 0) return { error: "vs − vo no puede ser 0" };
+        return { value: fs*(vs+vo)/(vs-vo), unit: "Hz", formula: `fo = ${fmt(fs)} × (${fmt(vs)} + ${fmt(vo)}) / (${fmt(vs)} − ${fmt(vo)})` };
       }
       if (mode === "fs") {
-        if (!isFinite(fo) || !isFinite(vs) || !isFinite(vo)) return null;
+        if (!isFinite(fo)||!isFinite(vs)||!isFinite(vo)) return null;
         if (vs + vo === 0) return { error: "vs + vo no puede ser 0" };
-        return { value: fo * (vs - vo) / (vs + vo), unit: "Hz", formula: `fs = ${fmt(fo)} × (${fmt(vs)} - ${fmt(vo)}) / (${fmt(vs)} + ${fmt(vo)})` };
+        return { value: fo*(vs-vo)/(vs+vo), unit: "Hz", formula: `fs = ${fmt(fo)} × (${fmt(vs)} − ${fmt(vo)}) / (${fmt(vs)} + ${fmt(vo)})` };
       }
       if (mode === "vs") {
-        if (!isFinite(fo) || !isFinite(fs) || !isFinite(vo)) return null;
+        if (!isFinite(fo)||!isFinite(fs)||!isFinite(vo)) return null;
         if (fo === fs) return { error: "fo y fs son iguales, vs indeterminado" };
-        return { value: (fo * vo + fs * vo) / (fo - fs), unit: "m/s", formula: "Despejando vs de la ecuación" };
+        return { value: (fo*vo + fs*vo)/(fo-fs), unit: "m/s", formula: "Despejando vs de la ecuación" };
       }
       if (mode === "vo") {
-        if (!isFinite(fo) || !isFinite(fs) || !isFinite(vs)) return null;
+        if (!isFinite(fo)||!isFinite(fs)||!isFinite(vs)) return null;
         if (fs === 0) return { error: "fs no puede ser 0" };
-        return { value: vs * (fo / fs - 1) / (1 + fo / fs), unit: "m/s", formula: "Despejando vo de la ecuación" };
+        return { value: vs*(fo/fs-1)/(1+fo/fs), unit: "m/s", formula: "Despejando vo de la ecuación" };
       }
     } catch { return null; }
     return null;
   })();
 
-  const labels: Record<string, string> = {
+  const labels: Record<DopplerVar, string> = {
     fo: "Frecuencia observada (fo)", fs: "Frecuencia de la fuente (fs)",
     vs: "Velocidad del sonido (vs)", vo: "Velocidad del observador (vo)",
   };
-  const placeholders: Record<string, string> = {
+  const placeholders: Record<DopplerVar, string> = {
     fo: "ej: 440", fs: "ej: 400", vs: "343", vo: "ej: 0",
   };
-  const allKeys = ["fo", "fs", "vs", "vo"];
+  const allKeys: DopplerVar[] = ["fo","fs","vs","vo"];
 
   return (
     <div>
-      <div className="badge orange">Efecto Doppler</div>
-      <p className="section-desc">
+      <Badge variant="orange">Efecto Doppler</Badge>
+      <SectionDesc>
         El efecto Doppler es el cambio aparente en la frecuencia de una onda cuando la fuente y el observador están en movimiento relativo.
-      </p>
+      </SectionDesc>
 
-      <div className="card">
-        <div className="card-title"><span className="dot orange" /> Fórmula General</div>
-        <div className="wave-visual">
+      {/* Fórmula */}
+      <Card>
+        <CardTitle dot="orange">Fórmula General</CardTitle>
+
+        {/* Wave bars */}
+        <div className="flex items-center justify-center gap-1 mb-4 h-12 overflow-hidden">
           {Array.from({ length: 20 }).map((_, i) => (
-            <div key={i} className="wave-bar" style={{ animationDelay: `${i * 0.06}s` }} />
+            <div
+              key={i}
+              className="w-1 rounded-sm bg-accent2 animate-wave"
+              style={{ animationDelay: `${i * 0.06}s` }}
+            />
           ))}
         </div>
-        <div className="formula-box" style={{ borderColor: "rgba(245,166,35,0.3)" }}>
-          <span className="highlight orange">fo</span> = <span className="highlight">fs</span> × (<span className="highlight blue">vs</span> + <span className="highlight blue">vo</span>) / (<span className="highlight blue">vs</span> − <span className="highlight orange">vo<sub style={{ fontSize: 10 }}>fuente</sub></span>)
-        </div>
-        <div className="explanation orange" style={{ marginTop: 16 }}>
-          <strong>fo</strong> = frecuencia percibida por el observador &nbsp;|&nbsp; <strong>fs</strong> = frecuencia emitida por la fuente<br />
-          <strong>vs</strong> = velocidad del sonido en el medio (343 m/s en aire) &nbsp;|&nbsp; <strong>vo</strong> = velocidad del observador<br /><br />
+
+        <FormulaBox borderColor="rgba(245,166,35,0.3)">
+          <span className="text-accent3">fo</span>
+          {" = "}
+          <span className="text-accent1">fs</span>
+          {" × ("}
+          <span className="text-accent2">vs</span>
+          {" + "}
+          <span className="text-accent2">vo</span>
+          {") / ("}
+          <span className="text-accent2">vs</span>
+          {" − "}
+          <span className="text-accent3">vo<sub className="text-[10px]">fuente</sub></span>
+          {")"}
+        </FormulaBox>
+
+        <Explanation variant="orange">
+          <strong>fo</strong> = frecuencia percibida por el observador &nbsp;|&nbsp;{" "}
+          <strong>fs</strong> = frecuencia emitida por la fuente<br />
+          <strong>vs</strong> = velocidad del sonido en el medio (343 m/s en aire) &nbsp;|&nbsp;{" "}
+          <strong>vo</strong> = velocidad del observador<br /><br />
           + si el observador se acerca a la fuente → tono más agudo<br />
           − si el observador se aleja de la fuente → tono más grave
-        </div>
-      </div>
+        </Explanation>
+      </Card>
 
-      <div className="card">
-        <div className="card-title"><span className="dot orange" /> Calculadora Doppler</div>
-        <p style={{ fontSize: 12, color: "var(--muted)", marginBottom: 12, fontFamily: "var(--font-mono)" }}>¿Qué quieres calcular?</p>
-        <div className="solve-for">
-          {(["fo", "fs", "vs", "vo"] as const).map(k => (
-            <button key={k}
-              className={`solve-btn orange${mode === k ? " active" : ""}`}
-              onClick={() => setMode(k)}>
+      {/* Calculadora */}
+      <Card>
+        <CardTitle dot="orange">Calculadora Doppler</CardTitle>
+        <p className="font-mono text-xs text-muted mb-3">¿Qué quieres calcular?</p>
+        <div className="flex gap-2 flex-wrap mb-5">
+          {allKeys.map(k => (
+            <SolveBtn key={k} active={mode === k} onClick={() => setMode(k)} variant="orange">
               {k === "fo" ? "Frec. observada" : k === "fs" ? "Frec. fuente" : k === "vs" ? "Vel. sonido" : "Vel. observador"}
-            </button>
+            </SolveBtn>
           ))}
         </div>
-        <div className="inputs-grid">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-5">
           {allKeys.filter(k => k !== mode).map(k => (
-            <div key={k} className="input-group">
-              <label>{labels[k]}</label>
-              <input
-                type="number"
-                placeholder={placeholders[k]}
-                value={vals[k]}
-                onChange={e => set(k, e.target.value)}
-              />
-            </div>
+            <InputGroup
+              key={k}
+              label={labels[k]}
+              placeholder={placeholders[k]}
+              value={vals[k]}
+              onChange={v => set(k, v)}
+            />
           ))}
         </div>
         {result ? (
           "error" in result ? (
-            <div className="result-box error">
-              <div className="result-value">{result.error}</div>
-            </div>
+            <ResultBox variant="error">
+              <ResultValue variant="error">{result.error}</ResultValue>
+            </ResultBox>
           ) : (
-            <div className="result-box" style={{ background: "rgba(245,166,35,0.08)", borderColor: "rgba(245,166,35,0.25)" }}>
+            <ResultBox variant="orange">
               <div>
-                <div className="result-label">Resultado — {labels[mode]}</div>
-                <div className="result-value orange">{fmt(result.value)} <span style={{ fontSize: 14 }}>{result.unit}</span></div>
+                <div className="font-mono text-[11px] tracking-widest uppercase text-muted mb-1">
+                  Resultado — {labels[mode]}
+                </div>
+                <ResultValue variant="orange">
+                  {fmt(result.value)} <span className="text-sm font-normal">{result.unit}</span>
+                </ResultValue>
               </div>
-              <div className="result-formula">{result.formula}</div>
-            </div>
+              <div className="font-mono text-xs text-muted text-right">{result.formula}</div>
+            </ResultBox>
           )
         ) : (
-          <div className="explanation orange">Ingresa los valores para calcular.</div>
+          <Explanation variant="orange">Ingresa los valores para calcular.</Explanation>
         )}
-      </div>
+      </Card>
 
-      <div className="card">
-        <div className="card-title"><span className="dot orange" /> Ejemplos Prácticos</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: 12 }}>
+      {/* Ejemplos */}
+      <Card>
+        <CardTitle dot="orange">Ejemplos Prácticos</CardTitle>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-3">
           {[
-            { title: "Ambulancia en reposo", desc: "Una ambulancia emite 700 Hz. Observador a 30 m/s acercándose.", fo: "761.2 Hz" },
-            { title: "Tren a 60 km/h", desc: "Tren silba a 500 Hz. Observador estático. vs = 343 m/s.", fo: "≈ 574 Hz (acercándose)" },
-            { title: "Estrella alejándose", desc: "Luz roja observada → frecuencia disminuye (redshift).", fo: "< fs" },
+            { title: "Ambulancia en reposo",  desc: "Una ambulancia emite 700 Hz. Observador a 30 m/s acercándose.", fo: "761.2 Hz" },
+            { title: "Tren a 60 km/h",        desc: "Tren silba a 500 Hz. Observador estático. vs = 343 m/s.",       fo: "≈ 574 Hz (acercándose)" },
+            { title: "Estrella alejándose",   desc: "Luz roja observada → frecuencia disminuye (redshift).",         fo: "< fs" },
           ].map(ex => (
-            <div key={ex.title} style={{ background: "#0d0d14", border: "1px solid var(--border)", borderRadius: 8, padding: "16px 18px" }}>
-              <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6, color: "var(--accent3)" }}>{ex.title}</div>
-              <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6, fontFamily: "var(--font-mono)" }}>{ex.desc}</div>
-              <div style={{ marginTop: 8, fontSize: 13, color: "var(--text)", fontFamily: "var(--font-mono)", fontWeight: 700 }}>{ex.fo}</div>
+            <div key={ex.title} className="bg-surface border border-border rounded-lg p-4">
+              <div className="font-bold text-[13px] text-accent3 mb-1.5">{ex.title}</div>
+              <div className="font-mono text-xs text-muted leading-relaxed">{ex.desc}</div>
+              <div className="mt-2 font-mono text-[13px] font-bold text-text">{ex.fo}</div>
             </div>
           ))}
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
@@ -857,38 +676,52 @@ function DopplerEffect() {
 // ROOT
 // ─────────────────────────────────────────────────────────────────────────────
 const tabs = [
-  { id: "ohm", label: "① Ley de Ohm" },
-  { id: "conv", label: "② Conversiones" },
-  { id: "doppler", label: "③ Efecto Doppler" },
+  { id: "ohm",     label: "① Ley de Ohm"      },
+  { id: "conv",    label: "② Conversiones"     },
+  { id: "doppler", label: "③ Efecto Doppler"   },
 ];
 
 export default function App() {
   const [tab, setTab] = useState("ohm");
 
   return (
-    <>
-      <style>{styles}</style>
-      <div className="app">
-        <header className="header">
-          <div className="header-tag">Física Interactiva</div>
-          <h1>Laboratorio <span>Virtual</span></h1>
-          <p>Aprende y practica conceptos fundamentales de física y electrónica</p>
-        </header>
-
-        <div className="tabs">
-          {tabs.map(t => (
-            <button key={t.id} className={`tab-btn${tab === t.id ? " active" : ""}`} onClick={() => setTab(t.id)}>
-              {t.label}
-            </button>
-          ))}
+    <div className="min-h-screen bg-bg bg-app-glow">
+      {/* Header */}
+      <header className="header-accent relative px-6 pt-10 pb-6 text-center border-b border-border">
+        <div className="font-mono text-[11px] tracking-[4px] uppercase text-accent1 mb-3">
+          Física Interactiva
         </div>
+        <h1 className="font-display font-extrabold tracking-tight leading-none" style={{ fontSize: "clamp(28px,5vw,52px)" }}>
+          Laboratorio <span className="text-gradient">Virtual</span>
+        </h1>
+        <p className="mt-2.5 font-mono text-sm text-muted">
+          Aprende y practica conceptos fundamentales de física y electrónica
+        </p>
+      </header>
 
-        <div className="content">
-          {tab === "ohm" && <OhmLaw />}
-          {tab === "conv" && <Conversions />}
-          {tab === "doppler" && <DopplerEffect />}
-        </div>
+      {/* Tabs */}
+      <div className="flex gap-0 px-6 pt-6 max-w-[900px] mx-auto border-b border-border overflow-x-auto">
+        {tabs.map(t => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={`px-[22px] py-3 bg-transparent border-none font-display font-semibold text-[13px] cursor-pointer border-b-2 transition-all duration-200 whitespace-nowrap tracking-[0.3px] ${
+              tab === t.id
+                ? "text-accent1 border-accent1"
+                : "text-muted border-transparent hover:text-text"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
-    </>
+
+      {/* Content */}
+      <div className="max-w-[900px] mx-auto px-6 pt-8 pb-16">
+        {tab === "ohm"     && <OhmLaw />}
+        {tab === "conv"    && <Conversions />}
+        {tab === "doppler" && <DopplerEffect />}
+      </div>
+    </div>
   );
 }
